@@ -906,6 +906,7 @@ export default function Dashboard() {
   const [mapLayer, setMapLayer] = useState('none') // 'none' | 'ndvi' | 'rain' | 'moisture'
   const [sowingShift, setSowingShift] = useState(0) // -2 to +2 weeks
   const [activeMidSeason, setActiveMidSeason] = useState(false) // toggle mid-season monitored shifts
+  const [cropPhoto, setCropPhoto] = useState(null) // base64 string of uploaded crop photo
   
   // Premium restructurings layout tabs state
   const [activeRightTab, setActiveRightTab] = useState('audit') // 'audit' | 'analytics' | 'soil' | 'schemes' | 'logs'
@@ -1239,6 +1240,17 @@ export default function Dashboard() {
     }
   }
 
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setCropPhoto(reader.result)
+      showToast('✓ Crop field photo attached successfully!', 'success')
+    }
+    reader.readAsDataURL(file)
+  }
+
   async function handleAnalyze(e) {
     if (e) e.preventDefault()
     setLoading(true)
@@ -1247,7 +1259,7 @@ export default function Dashboard() {
     try {
       const res = await fetch(API_URL, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ location, cropType, soilType, lat, lng, pincode, sowingShift, activeMidSeason })
+        body: JSON.stringify({ location, cropType, soilType, lat, lng, pincode, sowingShift, activeMidSeason, cropPhoto })
       })
       const data = await res.json()
       setResult(data)
@@ -2105,6 +2117,18 @@ export default function Dashboard() {
                         <td className="py-4">
                           <div className="font-bold text-slate-800">{claim.farmer_name}</div>
                           <div className="text-[10px] text-slate-404 font-semibold mt-0.5">Aadhaar: ****-****-9012</div>
+                          {claim.ai_report?.fraud_analysis && (
+                            <div className="mt-1.5 p-2 rounded-xl bg-slate-50 border border-slate-205 text-[10px] leading-relaxed max-w-xs text-left">
+                              <p className="font-bold text-slate-700 flex items-center gap-1.5">
+                                <span className={`h-1.5 w-1.5 rounded-full ${
+                                  claim.ai_report.fraud_analysis.fraudRisk === 'HIGH' ? 'bg-red-500 animate-ping' :
+                                  claim.ai_report.fraud_analysis.fraudRisk === 'MEDIUM' ? 'bg-amber-500' : 'bg-emerald-500'
+                                }`} />
+                                Fraud Risk: <span className="font-black text-slate-850 uppercase">{claim.ai_report.fraud_analysis.fraudRisk}</span>
+                              </p>
+                              <p className="text-slate-505 font-semibold mt-0.5">{claim.ai_report.fraud_analysis.notes}</p>
+                            </div>
+                          )}
                         </td>
                         <td className="py-4 font-mono text-[10px] text-slate-550">
                           {claim.location}
@@ -2429,6 +2453,26 @@ export default function Dashboard() {
               </div>
               <input type="checkbox" checked={activeMidSeason} onChange={e => setActiveMidSeason(e.target.checked)}
                 className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer" />
+            </div>
+
+            {/* Crop Field Photo Upload */}
+            <div className="space-y-1.5 text-left">
+              <label className="flex items-center gap-1.5 text-slate-505 text-xs font-bold"><Layers className="h-3.5 w-3.5 text-emerald-600" /> Crop Field Photo (Auditor Verification)</label>
+              <div className="flex items-center gap-3">
+                <input type="file" accept="image/*" onChange={handlePhotoUpload} id="crop-photo-file" className="hidden" />
+                <label htmlFor="crop-photo-file" className="flex-grow flex items-center justify-center gap-2 border border-dashed border-slate-350 hover:border-emerald-500 rounded-xl p-3 bg-slate-50 hover:bg-slate-100/50 cursor-pointer text-xs font-bold text-slate-600 transition">
+                  {cropPhoto ? (
+                    <span className="text-emerald-700 flex items-center gap-1"><CheckCircle className="h-4 w-4 text-emerald-650" /> Photo Attached</span>
+                  ) : (
+                    <>📷 Click to upload field photo</>
+                  )}
+                </label>
+                {cropPhoto && (
+                  <button type="button" onClick={() => setCropPhoto(null)} className="p-2.5 border rounded-xl hover:bg-red-50 text-red-500 transition hover:border-red-200 cursor-pointer">
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
             </div>
 
             <button type="submit" disabled={loading} className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-555 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-3.5 text-sm font-black text-white transition-all hover:scale-[1.01] active:scale-[0.99] shadow-lg shadow-emerald-600/10">
