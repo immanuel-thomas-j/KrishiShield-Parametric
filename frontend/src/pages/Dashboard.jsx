@@ -2099,67 +2099,94 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs font-semibold">
+                <table className="w-full text-left text-xs font-semibold border-collapse">
+                  <colgroup>
+                    <col style={{width:'26%'}} />
+                    <col style={{width:'18%'}} />
+                    <col style={{width:'10%'}} />
+                    <col style={{width:'12%'}} />
+                    <col style={{width:'11%'}} />
+                    <col style={{width:'13%'}} />
+                    <col style={{width:'10%'}} />
+                  </colgroup>
                   <thead>
-                    <tr className="text-slate-400 uppercase tracking-widest text-[9px] border-b pb-3">
-                      <th className="pb-3">Farmer Details</th>
-                      <th className="pb-3">Land Plot Coordinates</th>
-                      <th className="pb-3">Crop / Soil</th>
-                      <th className="pb-3 text-center">Rainfall Deficit</th>
-                      <th className="pb-3 text-right">Escrow Payout</th>
-                      <th className="pb-3 text-center">Status</th>
-                      <th className="pb-3 text-right">Governance Action</th>
+                    <tr className="text-slate-400 uppercase tracking-widest text-[9px] border-b border-slate-100">
+                      <th className="pb-3 pt-1">Farmer Details</th>
+                      <th className="pb-3 pt-1 pl-2">Land / Location</th>
+                      <th className="pb-3 pt-1 pl-2">Crop / Soil</th>
+                      <th className="pb-3 pt-1 text-center">Deficit Score</th>
+                      <th className="pb-3 pt-1 text-right">Payout</th>
+                      <th className="pb-3 pt-1 text-center">Status</th>
+                      <th className="pb-3 pt-1 text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {pendingClaims.map((claim) => (
-                      <tr key={claim.id} className="hover:bg-slate-50/30 transition">
-                        <td className="py-4">
-                          <div className="font-bold text-slate-800">{claim.farmer_name}</div>
-                          <div className="text-[10px] text-slate-404 font-semibold mt-0.5">Aadhaar: ****-****-9012</div>
+                      <tr key={claim.id} className="hover:bg-slate-50/40 transition align-top">
+
+                        {/* Farmer Details */}
+                        <td className="py-4 pr-4">
+                          <div className="font-bold text-slate-800 text-xs">{claim.farmer_name}</div>
+                          <div className="text-[10px] text-slate-400 font-semibold mt-0.5">Aadhaar: ****-****-9012</div>
                           {claim.ai_report?.fraud_analysis && (
-                            <div className="mt-1.5 p-2 rounded-xl bg-slate-50 border border-slate-205 text-[10px] leading-relaxed max-w-xs text-left">
-                              <p className="font-bold text-slate-700 flex items-center gap-1.5">
-                                <span className={`h-1.5 w-1.5 rounded-full ${
+                            <div className="mt-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[10px] leading-relaxed">
+                              <p className="font-bold text-slate-700 flex items-center gap-1.5 mb-1">
+                                <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${
                                   claim.ai_report.fraud_analysis.fraudRisk === 'HIGH' ? 'bg-red-500 animate-ping' :
-                                  claim.ai_report.fraud_analysis.fraudRisk === 'MEDIUM' ? 'bg-amber-500' : 'bg-emerald-500'
+                                  claim.ai_report.fraud_analysis.fraudRisk?.startsWith('LOW') ? 'bg-emerald-500' : 'bg-amber-500'
                                 }`} />
-                                Fraud Risk: <span className="font-black text-slate-850 uppercase">{claim.ai_report.fraud_analysis.fraudRisk}</span>
+                                <span>Fraud Risk:&nbsp;<span className="font-black text-slate-800 uppercase">{claim.ai_report.fraud_analysis.fraudRisk}</span></span>
                               </p>
-                              <p className="text-slate-505 font-semibold mt-0.5">{claim.ai_report.fraud_analysis.notes}</p>
+                              <p className="text-slate-500 font-medium leading-snug line-clamp-3">{claim.ai_report.fraud_analysis.notes}</p>
                             </div>
                           )}
                         </td>
-                        <td className="py-4 font-mono text-[10px] text-slate-550">
-                          {claim.location}
+
+                        {/* Location */}
+                        <td className="py-4 pr-4 pl-2">
+                          <span className="font-mono text-[10px] text-slate-500 leading-relaxed break-words">{claim.location}</span>
                         </td>
-                        <td className="py-4">
-                          <div className="font-bold text-slate-700">{claim.crop_type}</div>
-                          <div className="text-[10px] text-slate-404 font-semibold mt-0.5">{claim.soil_type} Soil</div>
+
+                        {/* Crop / Soil */}
+                        <td className="py-4 pr-2 pl-2">
+                          <div className="font-bold text-slate-700 text-xs">{claim.crop_type}</div>
+                          <div className="text-[10px] text-slate-400 font-semibold mt-0.5 whitespace-nowrap">{claim.soil_type} Soil</div>
                         </td>
+
+                        {/* Deficit Score */}
                         <td className="py-4 text-center">
-                          <span className="font-black text-red-550 bg-red-50 border border-red-150 px-2 py-0.5 rounded-full font-mono">
-                            {claim.risk_score}% Deficit
+                          <span className={`inline-block font-black text-[11px] px-2 py-0.5 rounded-full font-mono border ${
+                            claim.risk_score >= 80 ? 'text-red-600 bg-red-50 border-red-200' :
+                            claim.risk_score >= 50 ? 'text-amber-600 bg-amber-50 border-amber-200' :
+                            'text-emerald-600 bg-emerald-50 border-emerald-200'
+                          }`}>
+                            {claim.risk_score}/100
                           </span>
                         </td>
-                        <td className="py-4 text-right font-black text-slate-800">
+
+                        {/* Payout */}
+                        <td className="py-4 text-right font-black text-slate-800 text-xs whitespace-nowrap">
                           ₹{claim.claim_payout?.toLocaleString() || '45,000'}
                         </td>
+
+                        {/* Status */}
                         <td className="py-4 text-center">
                           {claim.approved ? (
-                            <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.75 rounded-full text-[9px] font-black uppercase tracking-wider">Settled (DBT)</span>
+                            <span className="inline-block bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-wider leading-tight">Settled (DBT)</span>
                           ) : (
-                            <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-0.75 rounded-full text-[9px] font-black uppercase tracking-wider animate-[pulse_2s_infinite]">Awaiting BAO Signature</span>
+                            <span className="inline-block bg-amber-50 text-amber-700 border border-amber-200 px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-wider leading-tight animate-[pulse_2s_infinite]">Awaiting BAO Sign</span>
                           )}
                         </td>
+
+                        {/* Action */}
                         <td className="py-4 text-right">
                           {claim.approved ? (
-                            <button disabled className="text-slate-400 bg-slate-50 border px-3 py-1.5 rounded-xl font-bold cursor-not-allowed">
-                              Approved & Sent
+                            <button disabled className="text-slate-400 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl text-[10px] font-bold cursor-not-allowed whitespace-nowrap">
+                              ✓ Approved
                             </button>
                           ) : (
-                            <button onClick={() => handleApproveClaim(claim.id)} className="bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-555 px-3 py-1.5 rounded-xl font-bold transition shadow-sm hover:shadow-emerald-650/10 cursor-pointer text-[11px]">
-                              Approve & Sign DBT
+                            <button onClick={() => handleApproveClaim(claim.id)} className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold transition shadow-sm cursor-pointer whitespace-nowrap">
+                              Approve & Sign
                             </button>
                           )}
                         </td>
