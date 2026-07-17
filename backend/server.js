@@ -276,11 +276,14 @@ function seededRng(str, i) {
 
 function generateWeatherData(cropType, location) {
   const profile = CROP_PROFILES[cropType] || CROP_PROFILES.Rice;
+  // Seed a location-specific drought severity baseline (0–1)
+  const locationDroughtBase = seededRng(location, 99);  // stable per location
   return profile.months.map((month, i) => {
     const baseRain = profile.rainfall + (seededRng(location, i) * 60 - 20);
     const historical = Math.round(baseRain + seededRng(location, i + 10) * 40);
-    const deficitChance = seededRng(location, i + 20);
-    const deficit = deficitChance > 0.4 ? (0.30 + seededRng(location, i + 30) * 0.25) : (0.05 + seededRng(location, i + 40) * 0.15);
+    // Continuous deficit: 8–52% range, driven by location drought baseline + monthly variance
+    const monthVariance = seededRng(location, i + 20) * 0.25 - 0.10; // ±10% monthly swing
+    const deficit = Math.max(0.08, Math.min(0.52, locationDroughtBase * 0.55 + monthVariance));
     const forecasted = Math.round(historical * (1 - deficit));
     const historicalTemp = profile.tempMax - 2 + seededRng(location, i + 50) * 4;
     const forecastedTemp = historicalTemp + seededRng(location, i + 60) * 3;
@@ -305,11 +308,14 @@ function calculateRisk(weatherData, cropType, soilType, liveWeather = null, sowi
   const keyFactors = [];
   const alerts = [];
 
-  // 0. ENSO Index (El Niño / La Niña)
-  const ensoState = 'El Niño (Active)';
-  const ensoImpact = 15; // +15% drought probability
-  riskScore += ensoImpact;
-  keyFactors.push(`El Niño Southern Oscillation active — increases monsoon dry-spell probability by 15%`);
+  // 0. ENSO Index — only adds risk when actual avg deficit is significant
+  const avgDeficit = weatherData.reduce((sum, d) => sum + ((d.historical_rain_mm - d.forecasted_rain_mm) / d.historical_rain_mm) * 100, 0) / weatherData.length;
+  const ensoState = avgDeficit > 25 ? 'El Niño (Active)' : 'Neutral / La Niña';
+  if (avgDeficit > 25) {
+    const ensoImpact = Math.round(avgDeficit > 40 ? 15 : avgDeficit > 30 ? 10 : 6);
+    riskScore += ensoImpact;
+    keyFactors.push(`El Niño Southern Oscillation active — average seasonal deficit ${avgDeficit.toFixed(0)}% raises monsoon dry-spell probability by ${ensoImpact}%`);
+  }
 
   // 1. Hyperlocal micro-climate correction
   let microClimateVariance = 0;
@@ -356,11 +362,16 @@ function calculateRisk(weatherData, cropType, soilType, liveWeather = null, sowi
 
     const weight = stageWeights[d.growth_stage] || 1.0;
     
-    if (deficit > 30) {
-      const stageRiskAddition = Math.round(15 * weight);
+    if (deficit > 35) {
+      // Proportional to severity: deeper deficits score higher
+      const severity = Math.min(deficit, 70); // cap raw deficit contribution at 70%
+      const stageRiskAddition = Math.round((severity / 100) * weight * 55);
       riskScore += stageRiskAddition;
-      keyFactors.push(`Deficit of ${deficit.toFixed(0)}% during critical ${d.growth_stage} phase (Stage Weight: ${weight}x) increases failure probability by ${stageRiskAddition}%`);
+      keyFactors.push(`Deficit of ${deficit.toFixed(0)}% during ${d.growth_stage} phase (Weight: ${weight}x) → +${stageRiskAddition} pts`);
       alerts.push({ month: d.month, type: 'drought', severity: deficit > 50 ? 'critical' : 'warning', deficit: deficit.toFixed(0) });
+    } else if (deficit > 20) {
+      // Mild deficit — small penalty but no alert
+      riskScore += Math.round(weight * 4);
     }
 
     if (d.forecasted_temp_c > profile.tempMax) {
