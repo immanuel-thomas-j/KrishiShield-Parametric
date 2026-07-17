@@ -19,11 +19,8 @@ Organized by the **Department of Quantum Mathematics, Saveetha School of Enginee
 
 ---
 
-### 👥 Team Vyomes
-* **Hari Krishnan R**
-* **Jackson JP**
-* **Immanuel Thomas j**
-* **Jenish S**
+### 👥 Team Vyomex
+Hari Krishnan R &nbsp;•&nbsp; Jackson JP &nbsp;•&nbsp; Immanuel Thomas J &nbsp;•&nbsp; Jenish S
 
 </div>
 
