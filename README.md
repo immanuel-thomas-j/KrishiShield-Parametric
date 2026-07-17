@@ -91,6 +91,20 @@ KrishiShield aligns directly with India's **India Stack** initiatives to route c
 
 ---
 
+## 📷 Groq Multimodal Vision AI Fraud Interception
+
+To prevent crop insurance fraud (such as farmers uploading stock photos, screen captures of other farms, or pictures of incorrect crops to trigger fake claims), KrishiShield incorporates a **multimodal verification pipeline**:
+
+1. **Crop Photo Upload**: Farmers upload a real-time photo of their crop field when running the climate assessment.
+2. **Groq LLaVA Vision Verification**: The backend dispatches the base64-encoded image to **Groq's LLaVA-3.2-11b Vision Model** (`llama-3.2-11b-vision-preview`).
+3. **Automated Forensic Analysis**: The model performs heuristic analysis checking:
+   * **Crop Consistency**: Does the crop in the photo match the claimed choice (e.g., Rice)?
+   * **Soil Consistency**: Does the soil in the photo match the selected category (e.g., Alluvial)?
+   * **Dryness Inspection**: Are physical signs of drought/water stress visually observable?
+   * **Fraud Verdict**: Classifies risk index as **LOW**, **MEDIUM**, or **HIGH**, generating auditor verification logs visible directly inside the Block Officer's claim approval desk.
+
+---
+
 ## ✨ Features
 
 | Feature Module | What it does |
