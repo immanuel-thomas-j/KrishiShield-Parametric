@@ -6,7 +6,7 @@
 ### Automated Parametric Crop Insurance & Zero-Touch DBT Settlement Protocol
 
 [![React](https://img.shields.io/badge/Framework-React%2019-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
-[![Vite](https://img.shields.io/badge/Build%20Tool-Vite%208-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev)
+[![Vite](https://img.shields.io/badge/Build%20Tool-Vite%208-646CFF?style=flat-square&logo=react&logoColor=white)](https://vitejs.dev)
 [![Groq](https://img.shields.io/badge/LLM-Groq%20LLaMA%203.3-f59e0b?style=flat-square&logo=meta&logoColor=white)](https://console.groq.com/)
 [![SQLite](https://img.shields.io/badge/Database-SQLite-003B57?style=flat-square&logo=sqlite&logoColor=white)](https://sqlite.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
@@ -30,25 +30,64 @@ Hari Krishnan R &nbsp;•&nbsp; Jackson JP &nbsp;•&nbsp; Immanuel Thomas J &nb
 
 ```mermaid
 graph TD
-    User([Farmer Client]) -->|GPS Coordinate Pin| Map[Interactive Leaflet Map]
-    Map -->|Deficit Parameter Query| API[Vite React Frontend]
-    API -->|REST API Request| BE[Node.js Express Server]
-    BE -->|Query Ingestion Layer| Meteo[NASA POWER / IMD Grids]
-    Meteo -->|Calibrate Anomaly Score| BE
-    BE -->|Actuarial Audit Check| SC[Solidity Policy Smart Contract]
-    SC -->|Deficit Threshold Breach &gt;40%| DBT{DBT Disbursed?}
-    DBT -->|Yes| IndianBank[Indian Bank Core Gateway]
-    DBT -->|No| Monitoring[Active Coverage - Continuous Monitoring]
-    IndianBank -->|Instant DBT Transfer| User
+    %% Farmer Interaction
+    Farmer([Farmer Client]) -->|GPS Coordinate Pin| LeafletMap[Interactive Leaflet Map]
+    LeafletMap -->|Trigger Audit Request| ReactFE[Vite React Frontend]
+    
+    %% API Ingestion
+    ReactFE -->|HTTPS Request| ExpressBE[Node.js Express Server]
+    ExpressBE -->|API Ingest Query| NASA[NASA POWER & IMD AWS Grids]
+    NASA -->|Return Rainfall Deficits| ExpressBE
+    
+    %% Blockchain Parametric Evaluation
+    ExpressBE -->|Compile Telemetry| SmartContract[Solidity Policy Contract]
+    SmartContract -->|Rainfall Deficit &gt;40% Check| ThresholdCheck{Threshold Breached?}
+    
+    %% Multi-Sig Governance (Anti-Spam)
+    ThresholdCheck -->|Yes| BAOApproval[BAO Audit Approval Check]
+    BAOApproval -->|District Officer Sign-off| MultiSig{Multi-Sig Validated?}
+    ThresholdCheck -->|No| ActiveCover[Active Coverage - Continuous Monitoring]
+    
+    %% Payout Execution
+    MultiSig -->|Yes| NPCIGateway[NPCI Aadhaar Payment Bridge]
+    MultiSig -->|No| FlagSpam[Flag Telemetry for Spam Review]
+    
+    NPCIGateway -->|Aadhaar DBT Payout| IndianBank[Indian Bank Core Gateway]
+    IndianBank -->|Wallet Credit| Farmer
+    
+    %% Audit Ledgers
+    IndianBank -->|Write Txn Hash| SQLite[(SQLite Auditing DB)]
 ```
 
 ---
 
-## 💡 The Problem
+## 💡 The Problem (Indian Agricultural Context)
 
-Traditional crop insurance under PMFBY requires manual physical field inspections and Crop Cutting Experiments (CCEs) when monsoonal variations strike. This leads to administrative corruption, disputed reports, and delayed claim payouts spanning 6 to 12 months, driving farmers into high-interest informal debts. 
+Traditional crop insurance under PMFBY (Pradhan Mantri Fasal Bima Yojana) requires manual physical field inspections and Crop Cutting Experiments (CCEs) when monsoonal variations strike. This leads to administrative corruption, disputed reports, and delayed claim payouts spanning 6 to 12 months. 
 
-KrishiShield resolves this by implementing a parametric weather-index protocol. By monitoring gridded climate data and triggering payouts decantrally through smart contracts directly into registered Aadhaar bank wallets (DBT), we eliminate delays and middle-men completely.
+### 🇮🇳 Ground Realities & Current Affairs:
+* **The Sowing Crisis**: In recent agricultural seasons, states like **Karnataka declared severe drought across 223 out of 236 taluks**, impacting over 48 lakh hectares of cultivated lands with crop damage estimates exceeding **₹35,000 Crores**.
+* **The Debt Trap**: Lacking cash reserves, smallholder farmers (who make up **86% of Indian landholders**) wait up to a year for crop-loss settlements. To buy seeds for the next sowing cycle, they are forced to borrow from local moneylenders at interest rates of **24% to 36%**, exacerbating rural distress and farmer suicides.
+* **The CCE Overhead**: Conducting over **70 Lakh manual CCEs** annually costs insurance carriers billions in administration and leads to opaque, delayed, or rejected claims.
+
+---
+
+## 🛡️ Multi-Sig Governance & Spam Prevention
+
+Fully automated, oracle-driven crop payouts are vulnerable to satellite sensor glitches, data-source downtime, or coordinate spoofing attempts to siphon escrow funds. To address this risk:
+
+1. **BAO Dual-Authorization**: KrishiShield integrates a **Block Agricultural Officer (BAO)** cryptographic verification layer.
+2. **Review Checkpoint**: Payouts are not sent immediately upon weather breaches. Instead, a district governance portal queues the assessment for approval. 
+3. **Anti-Spam Filter**: Local block officers cross-validate coordinates against ground records to filter out false or spam claims before signing off on the direct transfer, combining objective data speed with governance safety.
+
+---
+
+## ⚡ Digital Public Infrastructure (DPI) Alignment
+
+KrishiShield aligns directly with India's **India Stack** initiatives to route claims transparently:
+* **Aadhaar Identity Stack**: Resolves farmer authentication instantly, linked to digital land registry records (e.g., Bhoomi/Bhulekh portals).
+* **Aadhaar-Enabled Payments (AePS)**: Direct benefit transfer payouts are routed via the **NPCI Aadhaar Payment Bridge (APB)** directly into the bank account linked to the farmer's 12-digit Aadhaar.
+* **Scale Validation**: Emulates the PM-KISAN subsidy model, which has successfully disbursed over **₹3.2 Lakh Crore** directly to farmers, eliminating leaks, brokers, and administrative delays.
 
 ---
 
