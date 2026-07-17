@@ -523,8 +523,15 @@ async function analyzeCropPhoto(base64Image, cropType, soilType) {
   try {
     const cleanBase64 = base64Image.includes('base64,') ? base64Image.split('base64,')[1] : base64Image;
 
+    // Detect MIME type from data URI prefix, fallback to jpeg
+    let mimeType = 'image/jpeg';
+    if (base64Image.startsWith('data:')) {
+      const mimeMatch = base64Image.match(/^data:([^;]+);base64,/);
+      if (mimeMatch) mimeType = mimeMatch[1];
+    }
+
     const response = await groq.chat.completions.create({
-      model: "llama-3.2-11b-vision-preview",
+      model: "meta-llama/llama-4-scout-17b-16e-instruct",
       messages: [
         {
           role: "user",
@@ -551,17 +558,20 @@ Return a JSON object matching this schema exactly (do NOT return any other text,
             {
               type: "image_url",
               image_url: {
-                url: `data:image/jpeg;base64,${cleanBase64}`
+                url: `data:${mimeType};base64,${cleanBase64}`
               }
             }
           ]
         }
       ],
       temperature: 0.1,
-      response_format: { type: "json_object" }
+      max_tokens: 400
     });
 
-    return JSON.parse(response.choices[0].message.content.trim());
+    const raw = response.choices[0].message.content.trim();
+    // Extract JSON block robustly (strip markdown fences if present)
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    return jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(raw);
   } catch (err) {
     console.error('Groq Vision API failed:', err.message);
     return {

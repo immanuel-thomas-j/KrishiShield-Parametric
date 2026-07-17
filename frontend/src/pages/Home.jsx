@@ -369,6 +369,192 @@ export default function Home() {
         </div>
       </section>
 
+      {/* RISK SCORING FORMULA SECTION */}
+      <section className="relative bg-[#080d14] py-24 px-6 overflow-hidden">
+        {/* Background grid decoration */}
+        <div className="absolute inset-0 opacity-[0.04]" style={{backgroundImage:'linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)',backgroundSize:'40px 40px'}} />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[200px] bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="max-w-5xl mx-auto relative">
+          {/* Header */}
+          <div className="text-center mb-14">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest mb-5">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse inline-block" />
+              Actuarial Intelligence Engine
+            </span>
+            <h3 className="text-3xl font-extrabold text-white tracking-tight">How the Risk Score is Calculated</h3>
+            <p className="text-sm text-slate-500 font-semibold mt-3 max-w-lg mx-auto leading-relaxed">A transparent, deterministic formula — not a black box. Every variable is explainable and auditable by the Block Officer.</p>
+          </div>
+
+          {/* Master Formula */}
+          <div className="relative rounded-2xl border border-slate-700/50 bg-slate-900/80 backdrop-blur-sm p-6 mb-10 overflow-hidden">
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent" />
+            <p className="text-[9px] text-slate-600 uppercase tracking-widest font-black mb-4 text-center">Master Actuarial Formula</p>
+            <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-2 font-mono text-xs font-bold">
+              <span className="text-white bg-slate-800 px-2.5 py-1.5 rounded-lg border border-slate-700">Score</span>
+              <span className="text-slate-600 text-base">=</span>
+              <span className="text-red-400 bg-red-950/40 px-2.5 py-1.5 rounded-lg border border-red-900/40">ENSO <span className="text-red-600 font-normal">(+15)</span></span>
+              <span className="text-slate-600">+</span>
+              <span className="text-amber-400 bg-amber-950/40 px-2.5 py-1.5 rounded-lg border border-amber-900/40">SowingShift</span>
+              <span className="text-slate-600">+</span>
+              <span className="text-emerald-400 bg-emerald-950/40 px-2.5 py-1.5 rounded-lg border border-emerald-900/40"><span className="text-yellow-400">Σ</span> Deficit<span className="text-slate-500 text-[9px] align-sub">&gt;30%</span> × Weight</span>
+              <span className="text-slate-600">+</span>
+              <span className="text-blue-400 bg-blue-950/40 px-2.5 py-1.5 rounded-lg border border-blue-900/40">SoilRisk</span>
+              <span className="text-slate-600">+</span>
+              <span className="text-orange-400 bg-orange-950/40 px-2.5 py-1.5 rounded-lg border border-orange-900/40">LiveWeather</span>
+            </div>
+            <p className="text-center text-[10px] text-slate-600 font-semibold mt-4">Clamped 5–100 &nbsp;·&nbsp; Parametric trigger fires when Score &gt; 60 or any monthly deficit &gt; 42%</p>
+          </div>
+
+          {/* Component Cards — 3 col */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
+
+            {/* 1. ENSO */}
+            <div className="group rounded-2xl border border-red-900/30 hover:border-red-700/50 bg-gradient-to-br from-slate-900 to-red-950/20 p-5 transition-all hover:-translate-y-0.5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-9 w-9 shrink-0 rounded-xl bg-red-900/50 border border-red-800/40 flex items-center justify-center">
+                  <Globe className="h-4 w-4 text-red-400" />
+                </div>
+                <div>
+                  <p className="text-xs font-black text-white leading-tight">El Niño / ENSO State</p>
+                  <span className="text-[9px] font-bold text-red-400 bg-red-950/60 px-2 py-0.5 rounded-full border border-red-900/40 mt-0.5 inline-block">Fixed +15 pts</span>
+                </div>
+              </div>
+              <p className="text-[11px] text-slate-500 font-semibold leading-relaxed">Active ENSO weakens India's South-West monsoon. Every assessment starts with a baseline drought risk of <span className="text-red-400 font-bold">+15 points</span>.</p>
+              <div className="mt-4 h-1.5 w-full rounded-full bg-slate-800 overflow-hidden">
+                <div className="h-full bg-red-500/70 rounded-full" style={{width:'15%'}} />
+              </div>
+              <div className="flex justify-between text-[9px] text-slate-600 font-bold mt-1"><span>0</span><span className="text-red-400">15%</span><span>100</span></div>
+            </div>
+
+            {/* 2. Sowing Shift */}
+            <div className="group rounded-2xl border border-amber-900/30 hover:border-amber-700/50 bg-gradient-to-br from-slate-900 to-amber-950/20 p-5 transition-all hover:-translate-y-0.5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-9 w-9 shrink-0 rounded-xl bg-amber-900/50 border border-amber-800/40 flex items-center justify-center">
+                  <Clock className="h-4 w-4 text-amber-400" />
+                </div>
+                <div>
+                  <p className="text-xs font-black text-white leading-tight">Sowing Date Sensitivity</p>
+                  <span className="text-[9px] font-bold text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-900/40 mt-0.5 inline-block">±8–10% / week</span>
+                </div>
+              </div>
+              <div className="space-y-1.5 text-[10px] font-semibold">
+                <div className="flex items-center gap-2 text-emerald-400"><span className="font-mono bg-emerald-950/50 px-1.5 py-0.5 rounded border border-emerald-900/40">Delay +1w</span><span className="text-slate-500">→ Risk</span><span className="font-black">−8 pts</span></div>
+                <div className="flex items-center gap-2 text-red-400"><span className="font-mono bg-red-950/50 px-1.5 py-0.5 rounded border border-red-900/40">Early  −1w</span><span className="text-slate-500">→ Risk</span><span className="font-black">+10 pts</span></div>
+              </div>
+              <p className="text-[11px] text-slate-500 font-semibold leading-relaxed mt-3">Aligns flowering phase with peak late-monsoon rainfall windows. Biggest lever a farmer controls.</p>
+            </div>
+
+            {/* 3. Stage-Weighted Deficit */}
+            <div className="group rounded-2xl border border-emerald-900/30 hover:border-emerald-700/50 bg-gradient-to-br from-slate-900 to-emerald-950/20 p-5 transition-all hover:-translate-y-0.5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-9 w-9 shrink-0 rounded-xl bg-emerald-900/50 border border-emerald-800/40 flex items-center justify-center">
+                  <Sprout className="h-4 w-4 text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-xs font-black text-white leading-tight">Stage-Weighted Deficit</p>
+                  <span className="text-[9px] font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-900/40 mt-0.5 inline-block">Core Formula</span>
+                </div>
+              </div>
+              <div className="font-mono text-[10px] text-emerald-400 bg-black/40 rounded-xl p-3 border border-emerald-900/30 leading-loose">
+                <span className="text-slate-600">// per growth month</span><br/>
+                Δ = (Hist − Forecast) / Hist × 100<br/>
+                <span className="text-slate-600">if</span> Δ &gt; 30:<br/>
+                &nbsp;&nbsp;Score += 15 × StageWeight
+              </div>
+            </div>
+
+            {/* 4. Stage Weights */}
+            <div className="group rounded-2xl border border-violet-900/30 hover:border-violet-700/50 bg-gradient-to-br from-slate-900 to-violet-950/20 p-5 transition-all hover:-translate-y-0.5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-9 w-9 shrink-0 rounded-xl bg-violet-900/50 border border-violet-800/40 flex items-center justify-center">
+                  <BarChart2 className="h-4 w-4 text-violet-400" />
+                </div>
+                <div>
+                  <p className="text-xs font-black text-white leading-tight">Physiological Stage Weights</p>
+                  <span className="text-[9px] font-bold text-violet-400 bg-violet-950/60 px-2 py-0.5 rounded-full border border-violet-900/40 mt-0.5 inline-block">Growth Multipliers</span>
+                </div>
+              </div>
+              <div className="space-y-2.5">
+                {[['Flowering','2.0×',100,'text-red-400','bg-red-500'],['Grain Fill','1.5×',75,'text-orange-400','bg-orange-500'],['Tillering','1.2×',60,'text-amber-400','bg-amber-500'],['Sowing','0.8×',40,'text-emerald-400','bg-emerald-500'],['Ripening','0.8×',40,'text-blue-400','bg-blue-500']].map(([s,w,pct,c,bg])=>(
+                  <div key={s}>
+                    <div className="flex justify-between text-[10px] mb-1"><span className={`font-semibold text-slate-400`}>{s}</span><span className={`font-black font-mono ${c}`}>{w}</span></div>
+                    <div className="h-1 w-full rounded-full bg-slate-800"><div className={`h-full rounded-full ${bg}/60`} style={{width:`${pct}%`}}/></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 5. Soil + Water Need */}
+            <div className="group rounded-2xl border border-blue-900/30 hover:border-blue-700/50 bg-gradient-to-br from-slate-900 to-blue-950/20 p-5 transition-all hover:-translate-y-0.5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-9 w-9 shrink-0 rounded-xl bg-blue-900/50 border border-blue-800/40 flex items-center justify-center">
+                  <Droplets className="h-4 w-4 text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-xs font-black text-white leading-tight">Crop Water Need + Soil Type</p>
+                  <span className="text-[9px] font-bold text-blue-400 bg-blue-950/60 px-2 py-0.5 rounded-full border border-blue-900/40 mt-0.5 inline-block">+0 to +13 pts</span>
+                </div>
+              </div>
+              <div className="space-y-2 text-[10px]">
+                {[['High/Very High water crop','text-red-400','+5'],['Red Laterite (20% retention)','text-red-400','+8'],['Black Cotton soil','text-amber-400','+3'],['Alluvial / Loamy soil','text-emerald-400','+0–2']].map(([label,c,val])=>(
+                  <div key={label} className="flex justify-between items-center border-b border-slate-800/60 pb-1.5 last:border-0 last:pb-0">
+                    <span className="text-slate-500 font-semibold">{label}</span>
+                    <span className={`font-black font-mono ${c} shrink-0 ml-2`}>{val}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 6. Live Weather */}
+            <div className="group rounded-2xl border border-orange-900/30 hover:border-orange-700/50 bg-gradient-to-br from-slate-900 to-orange-950/20 p-5 transition-all hover:-translate-y-0.5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-9 w-9 shrink-0 rounded-xl bg-orange-900/50 border border-orange-800/40 flex items-center justify-center">
+                  <Thermometer className="h-4 w-4 text-orange-400" />
+                </div>
+                <div>
+                  <p className="text-xs font-black text-white leading-tight">Live Weather Telemetry</p>
+                  <span className="text-[9px] font-bold text-orange-400 bg-orange-950/60 px-2 py-0.5 rounded-full border border-orange-900/40 mt-0.5 inline-block">Open-Meteo API</span>
+                </div>
+              </div>
+              <div className="space-y-2 text-[10px]">
+                {[['Temp > crop max tolerance','text-red-400','+15'],['Relative humidity < 45%','text-orange-400','+10'],['Wind speed > 22 km/h (lodging)','text-amber-400','+8']].map(([label,c,val])=>(
+                  <div key={label} className="flex justify-between items-center border-b border-slate-800/60 pb-1.5 last:border-0 last:pb-0">
+                    <span className="text-slate-500 font-semibold">{label}</span>
+                    <span className={`font-black font-mono ${c} shrink-0 ml-2`}>{val}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Risk Verdict Bar */}
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+            <p className="text-[9px] text-slate-600 uppercase tracking-widest font-black mb-5 text-center">Parametric Trigger Thresholds</p>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="relative rounded-xl bg-emerald-950/40 border border-emerald-800/30 p-4 text-center overflow-hidden">
+                <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-emerald-500 to-transparent" />
+                <p className="text-2xl font-black text-emerald-400 font-mono">&lt; 40</p>
+                <p className="text-[10px] text-emerald-600 font-bold mt-1 uppercase tracking-widest">Safe Zone</p>
+                <p className="text-[11px] text-emerald-500/80 font-semibold mt-2">No insurance urgently needed. Monitor seasonally.</p>
+              </div>
+              <div className="relative rounded-xl bg-amber-950/40 border border-amber-800/30 p-4 text-center overflow-hidden">
+                <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-amber-500 to-transparent" />
+                <p className="text-2xl font-black text-amber-400 font-mono">40 – 65</p>
+                <p className="text-[10px] text-amber-600 font-bold mt-1 uppercase tracking-widest">Moderate Risk</p>
+                <p className="text-[11px] text-amber-500/80 font-semibold mt-2">Strongly consider enrolling in PMFBY coverage.</p>
+              </div>
+              <div className="relative rounded-xl bg-red-950/40 border border-red-800/30 p-4 text-center overflow-hidden">
+                <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-red-500 to-transparent" />
+                <p className="text-2xl font-black text-red-400 font-mono">&gt; 65</p>
+                <p className="text-[10px] text-red-600 font-bold mt-1 uppercase tracking-widest">Critical — DBT Live</p>
+                <p className="text-[11px] text-red-500/80 font-semibold mt-2">Parametric trigger fires. Payout queued for BAO sign-off.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* FAQs */}
       <section className="max-w-4xl mx-auto px-6 py-20 text-left">
         <div className="text-center space-y-3 mb-12">
