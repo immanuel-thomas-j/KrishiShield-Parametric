@@ -8,7 +8,7 @@ import {
   Volume2, VolumeX, Download, Printer, BarChart3, TrendingUp,
   Calculator, Link2, Hash, X, Send, ChevronRight, Languages,
   Wallet, Award, Compass, RefreshCw, Sun, Cloud, CloudRain,
-  CloudLightning, UserCheck, Lock, User, Cpu
+  CloudLightning, UserCheck, Lock, User, Cpu, LogOut
 } from 'lucide-react'
 import {
   XAxis, YAxis, CartesianGrid, Tooltip,
