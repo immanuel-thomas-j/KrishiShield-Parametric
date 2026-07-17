@@ -45,8 +45,15 @@ function initializeDb() {
       timestamp TEXT,
       weather_data TEXT,
       soil_health TEXT,
-      ai_report TEXT
-    )`);
+      ai_report TEXT,
+      approved INTEGER DEFAULT 0
+    )`, [], (err) => {
+      if (!err) {
+        db.run(`ALTER TABLE assessments ADD COLUMN approved INTEGER DEFAULT 0`, [], (err2) => {
+          // Safe block to ignore duplicate column errors
+        });
+      }
+    });
 
     // Wallet table
     db.run(`CREATE TABLE IF NOT EXISTS wallets (
@@ -66,13 +73,30 @@ function initializeDb() {
     )`);
 
     // Seed default demo user for testing
-    db.get("SELECT COUNT(*) as count FROM users", [], (err, row) => {
+    db.get("SELECT COUNT(*) as count FROM users WHERE aadhaar = '123456789012'", [], (err, row) => {
       if (row && row.count === 0) {
         const hashed = hashPassword("demo");
-        db.run(`INSERT INTO users (id, aadhaar, name, phone, pincode, password) VALUES (1, '123456789012', 'Rajesh Kumar', '9876543210', '560001', ?)`, [hashed]);
-        db.run(`INSERT INTO wallets (user_id, balance) VALUES (1, 6000.0)`);
-        db.run(`INSERT INTO transactions (user_id, title, amount, type, date, ref) VALUES (1, 'Initial DBT Setup (PM-KISAN)', 6000.0, 'credit', '2026-07-10', 'UPI92847164')`);
-        console.log("Seeded default test user: Aadhaar=123456789012 / Password=demo");
+        db.run(`INSERT INTO users (id, aadhaar, name, phone, pincode, password) VALUES (1, '123456789012', 'Rajesh Kumar (Farmer)', '9876543210', '560001', ?)`, [hashed], (err2) => {
+          if (!err2) {
+            db.run(`INSERT INTO wallets (user_id, balance) VALUES (1, 96000.0)`);
+            db.run(`INSERT INTO transactions (user_id, title, amount, type, date, ref) VALUES (1, 'Parametric Payout — Wheat', 45000.0, 'credit', '2026-07-17', 'DBT54994055')`);
+            db.run(`INSERT INTO transactions (user_id, title, amount, type, date, ref) VALUES (1, 'Parametric Payout — Rice', 45000.0, 'credit', '2026-07-17', 'DBT31011845')`);
+            db.run(`INSERT INTO transactions (user_id, title, amount, type, date, ref) VALUES (1, 'Initial DBT Setup (PM-KISAN)', 6000.0, 'credit', '2026-07-10', 'UPI92847164')`);
+            console.log("Seeded default test user: Aadhaar=123456789012 / Password=demo");
+          }
+        });
+      }
+    });
+
+    db.get("SELECT COUNT(*) as count FROM users WHERE aadhaar = '987654321098'", [], (err, row) => {
+      if (row && row.count === 0) {
+        const hashed = hashPassword("admin");
+        db.run(`INSERT INTO users (id, aadhaar, name, phone, pincode, password) VALUES (2, '987654321098', 'Dr. A. K. Sharma (Block Officer)', '9123456789', '560001', ?)`, [hashed], (err2) => {
+          if (!err2) {
+            db.run(`INSERT INTO wallets (user_id, balance) VALUES (2, 0.0)`);
+            console.log("Seeded Block Officer test user: Aadhaar=987654321098 / Password=admin");
+          }
+        });
       }
     });
   });
@@ -753,6 +777,62 @@ app.post('/api/save-assessment', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to save assessment' });
+  }
+});
+
+// 3.5 Get all pending assessments (for auditor / Block Officer)
+app.get('/api/pending-assessments', async (req, res) => {
+  try {
+    const pending = await dbQuery(`
+      SELECT a.*, u.name as farmer_name, u.phone as farmer_phone
+      FROM assessments a
+      JOIN users u ON a.user_id = u.id
+      WHERE a.parametric_trigger = 1 ORDER BY a.timestamp DESC
+    `);
+    const parsed = pending.map(a => ({
+      ...a,
+      parametric_trigger: a.parametric_trigger === 1,
+      approved: a.approved === 1,
+      weather_data: a.weather_data ? JSON.parse(a.weather_data) : null,
+      soil_health: a.soil_health ? JSON.parse(a.soil_health) : null,
+      ai_report: a.ai_report ? JSON.parse(a.ai_report) : null
+    }));
+    res.json(parsed);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch pending assessments' });
+  }
+});
+
+// 3.6 Approve assessment (disburses wallet payout credit voucher)
+app.post('/api/approve-assessment', async (req, res) => {
+  const { assessmentId } = req.body;
+  try {
+    const assessment = await dbGet(`SELECT * FROM assessments WHERE id = ?`, [assessmentId]);
+    if (!assessment) return res.status(404).json({ error: 'Assessment not found' });
+    if (assessment.approved === 1) return res.json({ success: true, message: 'Already approved' });
+
+    // Update approved status
+    await dbRun(`UPDATE assessments SET approved = 1 WHERE id = ?`, [assessmentId]);
+
+    // Disburse money to the farmer's wallet
+    const userId = assessment.user_id;
+    const amount = assessment.claim_payout || 45000;
+    const cropType = assessment.crop_type || 'Crop';
+    
+    const wallet = await dbGet(`SELECT balance FROM wallets WHERE user_id = ?`, [userId]);
+    if (wallet) {
+      const newBalance = wallet.balance + amount;
+      await dbRun(`UPDATE wallets SET balance = ? WHERE user_id = ?`, [newBalance, userId]);
+      await dbRun(
+        `INSERT INTO transactions (user_id, title, amount, type, date, ref) VALUES (?, ?, ?, ?, ?, ?)`,
+        [userId, `Parametric Payout — ${cropType}`, amount, 'credit', new Date().toISOString().split('T')[0], `DBT${Math.floor(10000000 + Math.random() * 90000000)}`]
+      );
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to approve assessment' });
   }
 });
 

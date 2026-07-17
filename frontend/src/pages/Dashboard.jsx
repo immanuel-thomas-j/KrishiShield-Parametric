@@ -950,6 +950,17 @@ export default function Dashboard() {
       const histData = await histRes.json()
       setHistoryList(histData)
       
+      if (histData && histData.length > 0) {
+        const latestTriggered = histData.find(a => a.parametric_trigger);
+        if (latestTriggered) {
+          setHasPaidClaim(latestTriggered.approved === 1 || latestTriggered.approved === true);
+        } else {
+          setHasPaidClaim(false);
+        }
+      } else {
+        setHasPaidClaim(false);
+      }
+      
       const walletRes = await fetch(`${BASE_URL}/api/wallet/${userId}`)
       const walletData = await walletRes.json()
       setWalletBalance(walletData.balance)
@@ -958,6 +969,46 @@ export default function Dashboard() {
       console.error('Failed to sync DB user data:', err)
     }
   }
+
+  // Block Officer pending claims state and actions
+  const [pendingClaims, setPendingClaims] = useState([])
+  const [loadingClaims, setLoadingClaims] = useState(false)
+
+  async function fetchPendingClaims() {
+    setLoadingClaims(true)
+    try {
+      const res = await fetch(`${BASE_URL}/api/pending-assessments`)
+      const data = await res.json()
+      setPendingClaims(data)
+    } catch (err) {
+      console.error('Failed to fetch pending audit claims:', err)
+    } finally {
+      setLoadingClaims(false)
+    }
+  }
+
+  async function handleApproveClaim(assessmentId) {
+    try {
+      const res = await fetch(`${BASE_URL}/api/approve-assessment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assessmentId })
+      })
+      const data = await res.json()
+      if (data.success) {
+        showToast('✓ Direct Benefit Transfer authorized and disbursed!', 'success')
+        fetchPendingClaims()
+      }
+    } catch (err) {
+      showToast('Governance approval execution failed', 'error')
+    }
+  }
+
+  useEffect(() => {
+    if (user && user.aadhaar === '987654321098') {
+      fetchPendingClaims()
+    }
+  }, [user])
 
   // Fetch Open-Meteo Weather when lat/lng change
   useEffect(() => {
@@ -1290,7 +1341,11 @@ export default function Dashboard() {
           setTimeout(() => {
             setDbtSimStep('step3')
             setTimeout(() => {
-              completeDBTPayoutOnBackend()
+              setDbtSimStep('queued')
+              showToast('Claim queued in District Audit Ledger!', 'success')
+              if (user) {
+                fetchUserData(user.id)
+              }
             }, 1500)
           }, 1500)
         }, 1500)
@@ -1823,31 +1878,46 @@ export default function Dashboard() {
           )}
 
           {authTab === 'login' ? (
-            <form onSubmit={handleLoginSubmit} className="space-y-4">
-              <div className="space-y-1">
-                <label className="text-xs text-slate-500 font-bold block">12-Digit Aadhaar Card Number</label>
-                <div className="relative">
-                  <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <input type="text" maxLength={12} value={aadhaarInput} onChange={e => setAadhaarInput(e.target.value.replace(/\D/g, ''))}
-                    className="w-full rounded-xl bg-slate-50 border border-slate-200 pl-9 pr-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-semibold"
-                    placeholder="Enter Aadhaar (e.g. 123456789012)" required />
+            <>
+              <form onSubmit={handleLoginSubmit} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-xs text-slate-500 font-bold block">12-Digit Aadhaar Card Number</label>
+                  <div className="relative">
+                    <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <input type="text" maxLength={12} value={aadhaarInput} onChange={e => setAadhaarInput(e.target.value.replace(/\D/g, ''))}
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200 pl-9 pr-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-semibold"
+                      placeholder="Enter Aadhaar (e.g. 123456789012)" required />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs text-slate-500 font-bold block">Portal Password</label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <input type="password" value={passwordInput} onChange={e => setPasswordInput(e.target.value)}
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200 pl-9 pr-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      placeholder="Enter password" required />
+                  </div>
+                </div>
+
+                <button type="submit" disabled={loading} className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-555 disabled:opacity-50 px-4 py-3 text-sm font-bold text-white transition-all shadow-md shadow-emerald-600/10 mt-6">
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Sign In to Portal <ArrowRight className="h-4 w-4" /></>}
+                </button>
+              </form>
+              <div className="mt-4 border-t border-slate-200/60 pt-4 text-center">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Demo Quick Login</span>
+                <div className="flex justify-center gap-2">
+                  <button type="button" onClick={() => { setAadhaarInput('123456789012'); setPasswordInput('demo'); }}
+                    className="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[10px] font-bold transition border border-emerald-150 flex items-center gap-1 cursor-pointer">
+                    🌾 Farmer Demo
+                  </button>
+                  <button type="button" onClick={() => { setAadhaarInput('987654321098'); setPasswordInput('admin'); }}
+                    className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold transition border border-slate-200 flex items-center gap-1 cursor-pointer">
+                    👨‍💼 Block Officer Demo
+                  </button>
                 </div>
               </div>
-
-              <div className="space-y-1">
-                <label className="text-xs text-slate-500 font-bold block">Portal Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <input type="password" value={passwordInput} onChange={e => setPasswordInput(e.target.value)}
-                    className="w-full rounded-xl bg-slate-50 border border-slate-200 pl-9 pr-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                    placeholder="Enter password" required />
-                </div>
-              </div>
-
-              <button type="submit" disabled={loading} className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-555 disabled:opacity-50 px-4 py-3 text-sm font-bold text-white transition-all shadow-md shadow-emerald-600/10 mt-6">
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Sign In to Portal <ArrowRight className="h-4 w-4" /></>}
-              </button>
-            </form>
+            </>
           ) : (
             <form onSubmit={handleRegisterSubmit} className="space-y-4">
               <div className="space-y-1">
@@ -1907,10 +1977,174 @@ export default function Dashboard() {
             </form>
           )}
 
-          <div className="mt-6 pt-5 border-t border-slate-200 text-xs text-slate-505 space-y-1 bg-slate-50/50 -mx-8 -mb-8 p-6 rounded-b-3xl font-semibold">
+          <div className="mt-6 pt-5 border-t border-slate-200 text-xs text-slate-505 space-y-1.5 bg-slate-50/50 -mx-8 -mb-8 p-6 rounded-b-3xl font-semibold">
             <span className="font-bold text-slate-705 flex items-center gap-1.5"><Info className="h-4 w-4 text-emerald-600" /> Demo Credentials (Pre-seeded DB):</span>
-            <p>Aadhaar: <span className="font-mono bg-white border px-1.5 py-0.5 rounded text-emerald-700">123456789012</span></p>
-            <p>Password: <span className="font-mono bg-white border px-1.5 py-0.5 rounded text-emerald-700">demo</span></p>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-[10px] text-emerald-700 font-bold uppercase">🌾 Farmer</p>
+                <p className="mt-0.5">Aadhaar: <span className="font-mono bg-white border px-1.5 py-0.5 rounded text-slate-700">123456789012</span></p>
+                <p className="mt-1">Password: <span className="font-mono bg-white border px-1.5 py-0.5 rounded text-slate-700">demo</span></p>
+              </div>
+              <div>
+                <p className="text-[10px] text-slate-700 font-bold uppercase">👨‍💼 Block Officer</p>
+                <p className="mt-0.5">Aadhaar: <span className="font-mono bg-white border px-1.5 py-0.5 rounded text-slate-700">987654321098</span></p>
+                <p className="mt-1">Password: <span className="font-mono bg-white border px-1.5 py-0.5 rounded text-slate-700">admin</span></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // MAIN DASHBOARD LAYOUT (IF LOGGED IN)
+  if (user && user.aadhaar === '987654321098') {
+    return (
+      <div className="min-h-screen bg-slate-50 text-slate-850 pb-12 font-sans">
+        {toast && (
+          <div className={`fixed bottom-24 right-6 z-50 p-4 rounded-2xl shadow-2xl border backdrop-blur-xl transition-all animate-[slideIn_0.3s_ease] flex items-center gap-3 max-w-sm no-print ${
+            toast.type === 'warning' ? 'bg-amber-50/95 border-amber-250 text-amber-900' :
+            toast.type === 'error' ? 'bg-red-50/95 border-red-250 text-red-900' :
+            'bg-emerald-50/95 border-emerald-250 text-emerald-900'
+          }`}>
+            {toast.type === 'warning' ? <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" /> :
+             toast.type === 'error' ? <XCircle className="h-5 w-5 text-red-650 shrink-0" /> :
+             <CheckCircle className="h-5 w-5 text-emerald-600 shrink-0" />}
+            <div className="flex-grow text-xs font-bold leading-normal">{toast.msg}</div>
+            <button onClick={() => setToast(null)} className="text-slate-400 hover:text-slate-600 p-0.5 rounded-lg hover:bg-slate-100/50 transition">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+
+        {/* LOGO BAR */}
+        <div className="bg-slate-900 text-white py-3.5 px-6 flex items-center justify-between border-b border-slate-800 shadow-lg no-print">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600">
+              <Shield className="h-5.5 w-5.5 text-white" />
+            </div>
+            <div>
+              <span className="text-sm font-bold tracking-tight block">KrishiShield <span className="text-emerald-450 font-extrabold">Auditor Portal</span></span>
+              <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wider block">Sovereign Direct Benefit Governance</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700 text-xs font-bold text-slate-200">
+              <UserCheck className="h-4 w-4 text-emerald-555" />
+              <span>Dr. A. K. Sharma (Block Officer)</span>
+            </div>
+            <button onClick={handleLogout} className="flex items-center gap-1 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition border border-red-500/20 cursor-pointer">
+              <LogOut className="h-3.5 w-3.5" /> Logout
+            </button>
+          </div>
+        </div>
+
+        <div className="max-w-6xl mx-auto px-6 mt-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div className="bg-white border rounded-2xl p-5 shadow-sm">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Insured Hectares</span>
+              <span className="text-2xl font-black text-slate-850">2,418 Ha</span>
+              <span className="text-[9px] text-emerald-600 font-bold block mt-1">✓ Verified land registry</span>
+            </div>
+            <div className="bg-white border rounded-2xl p-5 shadow-sm">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Active Deficit Warnings</span>
+              <span className="text-2xl font-black text-amber-600">14 Blocks</span>
+              <span className="text-[9px] text-slate-400 font-bold block mt-1">Based on IMD AWS network</span>
+            </div>
+            <div className="bg-white border rounded-2xl p-5 shadow-sm">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Pending Audit Queue</span>
+              <span className={`text-2xl font-black ${pendingClaims.length > 0 ? 'text-red-550' : 'text-slate-400'}`}>{pendingClaims.length} Claims</span>
+              <span className="text-[9px] text-slate-400 font-bold block mt-1">Requires digital sign-off</span>
+            </div>
+            <div className="bg-white border rounded-2xl p-5 shadow-sm">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Total DBT Payouts</span>
+              <span className="text-2xl font-black text-emerald-600">₹4.2 Lakh</span>
+              <span className="text-[9px] text-emerald-600 font-bold block mt-1">Disbursed directly via AePS</span>
+            </div>
+          </div>
+
+          <div className="bg-white border rounded-2xl p-6 shadow-sm">
+            <div className="flex justify-between items-center pb-4 border-b border-slate-100 mb-6">
+              <div>
+                <h2 className="text-base font-black text-slate-850">🗳️ Pending Parametric Claim Settlements</h2>
+                <p className="text-xs text-slate-404 font-semibold mt-0.5">District Officer governance desk for monsoonal audit verifications</p>
+              </div>
+              <button onClick={fetchPendingClaims} disabled={loadingClaims} className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 px-3 py-1.5 rounded-xl text-xs font-bold transition border cursor-pointer">
+                {loadingClaims ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <>Sync Audit Queue</>}
+              </button>
+            </div>
+
+            {loadingClaims && pendingClaims.length === 0 ? (
+              <div className="py-16 text-center">
+                <Loader2 className="h-8 w-8 text-emerald-650 animate-spin mx-auto mb-3" />
+                <p className="text-xs text-slate-404 font-bold">Synchronizing audit ledgers...</p>
+              </div>
+            ) : pendingClaims.length === 0 ? (
+              <div className="py-16 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                <CheckCircle className="h-10 w-10 text-emerald-500 mx-auto mb-3 animate-[pulse_2s_infinite]" />
+                <p className="text-sm font-bold text-slate-700">All Parametric Claims Audited & Cleared!</p>
+                <p className="text-xs text-slate-404 font-semibold mt-1">No pending claims waiting for sign-off in the district ledger.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs font-semibold">
+                  <thead>
+                    <tr className="text-slate-400 uppercase tracking-widest text-[9px] border-b pb-3">
+                      <th className="pb-3">Farmer Details</th>
+                      <th className="pb-3">Land Plot Coordinates</th>
+                      <th className="pb-3">Crop / Soil</th>
+                      <th className="pb-3 text-center">Rainfall Deficit</th>
+                      <th className="pb-3 text-right">Escrow Payout</th>
+                      <th className="pb-3 text-center">Status</th>
+                      <th className="pb-3 text-right">Governance Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {pendingClaims.map((claim) => (
+                      <tr key={claim.id} className="hover:bg-slate-50/30 transition">
+                        <td className="py-4">
+                          <div className="font-bold text-slate-800">{claim.farmer_name}</div>
+                          <div className="text-[10px] text-slate-404 font-semibold mt-0.5">Aadhaar: ****-****-9012</div>
+                        </td>
+                        <td className="py-4 font-mono text-[10px] text-slate-550">
+                          {claim.location}
+                        </td>
+                        <td className="py-4">
+                          <div className="font-bold text-slate-700">{claim.crop_type}</div>
+                          <div className="text-[10px] text-slate-404 font-semibold mt-0.5">{claim.soil_type} Soil</div>
+                        </td>
+                        <td className="py-4 text-center">
+                          <span className="font-black text-red-550 bg-red-50 border border-red-150 px-2 py-0.5 rounded-full font-mono">
+                            {claim.risk_score}% Deficit
+                          </span>
+                        </td>
+                        <td className="py-4 text-right font-black text-slate-800">
+                          ₹{claim.claim_payout?.toLocaleString() || '45,000'}
+                        </td>
+                        <td className="py-4 text-center">
+                          {claim.approved ? (
+                            <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.75 rounded-full text-[9px] font-black uppercase tracking-wider">Settled (DBT)</span>
+                          ) : (
+                            <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-0.75 rounded-full text-[9px] font-black uppercase tracking-wider animate-[pulse_2s_infinite]">Awaiting BAO Signature</span>
+                          )}
+                        </td>
+                        <td className="py-4 text-right">
+                          {claim.approved ? (
+                            <button disabled className="text-slate-400 bg-slate-50 border px-3 py-1.5 rounded-xl font-bold cursor-not-allowed">
+                              Approved & Sent
+                            </button>
+                          ) : (
+                            <button onClick={() => handleApproveClaim(claim.id)} className="bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-555 px-3 py-1.5 rounded-xl font-bold transition shadow-sm hover:shadow-emerald-650/10 cursor-pointer text-[11px]">
+                              Approve & Sign DBT
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       </div>

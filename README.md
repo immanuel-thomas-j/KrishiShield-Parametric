@@ -170,3 +170,18 @@ npm install
 npm run dev
 ```
 Open `http://localhost:5174` in your browser.
+
+---
+
+## 🔐 Pre-Seeded Demo Login Credentials
+
+For local testing, the following accounts are pre-seeded in the SQLite database:
+
+* **🌾 Farmer Profile (Rajesh Kumar)**:
+  * **Aadhaar Card Number**: `123456789012`
+  * **Password**: `demo`
+  * **Direct Benefit Balance**: Initialized at `₹96,000` with pre-populated grant ledger history.
+* **👨‍💼 Block Agricultural Officer (BAO) Auditor**:
+  * **Aadhaar Card Number**: `987654321098`
+  * **Password**: `admin`
+  * **Direct Benefit Balance**: `₹0` (auditor role).
