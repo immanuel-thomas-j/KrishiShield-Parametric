@@ -170,15 +170,3 @@ npm install
 npm run dev
 ```
 Open `http://localhost:5174` in your browser.
-
----
-
-## 🤝 Hackathon Partners & Sponsors
-Proudly backed by partners powering **BYTEBLAZE 2026**:
-
-* **Shield Sponsor**: DB0247
-* **Ecosystem Partner**: Wyntrix (Specialized Internship Programs)
-* **Internship Sponsor**: Oxis
-* **Industry Partner**: Altrusity
-* **Media Partner**: Eventopia
-* **Community Partner**: Cybrian
