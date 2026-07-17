@@ -1284,11 +1284,14 @@ export default function Dashboard() {
     setTimeout(() => {
       setDbtSimStep('step1')
       setTimeout(() => {
-        setDbtSimStep('step2')
+        setDbtSimStep('stepBAO')
         setTimeout(() => {
-          setDbtSimStep('step3')
+          setDbtSimStep('step2')
           setTimeout(() => {
-            completeDBTPayoutOnBackend()
+            setDbtSimStep('step3')
+            setTimeout(() => {
+              completeDBTPayoutOnBackend()
+            }, 1500)
           }, 1500)
         }, 1500)
       }, 1500)
@@ -1977,10 +1980,11 @@ export default function Dashboard() {
                   {[
                     { id: 'init', label: 'NPCI Aadhaar Mapping', desc: 'Resolving landholder Aadhaar to bank account' },
                     { id: 'step1', label: 'Weather Index Verification', desc: 'Cross-checking weather oracles deficit feeds' },
+                    { id: 'stepBAO', label: 'Block Officer Audit Approval', desc: 'Verifying District Officer multi-sig signature approval' },
                     { id: 'step2', label: 'Indian Bank Core Escrow Check', desc: 'Verifying sovereign claim reserve pools' },
                     { id: 'step3', label: 'Signing Payout Credit Voucher', desc: 'Generating cryptographic transfer approval' }
                   ].map((step, idx) => {
-                    const stepStates = ['init', 'step1', 'step2', 'step3']
+                    const stepStates = ['init', 'step1', 'stepBAO', 'step2', 'step3']
                     const currentIdx = stepStates.indexOf(dbtSimStep)
                     const isDone = currentIdx > idx
                     const isActive = dbtSimStep === step.id
